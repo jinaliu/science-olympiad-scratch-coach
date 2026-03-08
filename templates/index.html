@@ -249,6 +249,11 @@
         // Single newlines → <br>
         .replace(/\n/g, '<br>');
     }
+
+    // ─── Auto-start when rules are pre-loaded ────────────────────────────────
+    if (rulesUploaded) {
+      sendMessage("Hi! The Game On rules are loaded. Please give me a quick summary and tell me Step 1.");
+    }
   </script>
 
 </body>
