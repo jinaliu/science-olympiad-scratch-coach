@@ -65,7 +65,7 @@
     const fileNameSpan = document.getElementById('file-name');
     const uploadStatus = document.getElementById('upload-status');
 
-    pdfInput.addEventListener('change', () => {
+    if (pdfInput) pdfInput.addEventListener('change', () => {
       const file = pdfInput.files[0];
       if (!file) return;
       fileNameSpan.textContent = file.name;
