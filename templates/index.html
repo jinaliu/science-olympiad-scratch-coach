@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎮 Science Olympiad Game On — Scratch Coach</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>🎮 Game On — Scratch Coach</h1>
+    <p class="subtitle">Your AI helper for building your Science Olympiad Scratch game!</p>
+  </header>
+
+  <main>
+
+    <!-- Upload section -->
+    <section id="upload-section" class="card">
+      <h2>📄 Step 1: Upload Your Rules PDF</h2>
+      <p>Get the official "Game On" rules from your Science Olympiad organizer and upload them here.</p>
+      <div class="upload-area" id="drop-zone">
+        <input type="file" id="pdf-input" accept=".pdf" hidden />
+        <button class="btn btn-upload" onclick="document.getElementById('pdf-input').click()">
+          📁 Choose PDF
+        </button>
+        <span id="file-name">No file chosen</span>
+      </div>
+      <div id="upload-status"></div>
+    </section>
+
+    <!-- Chat section -->
+    <section id="chat-section" class="card" style="display:none">
+      <div class="chat-header">
+        <h2>💬 Chat with Your Coach</h2>
+        <button class="btn btn-small" id="reset-btn" title="Clear conversation">🔄 New Chat</button>
+      </div>
+
+      <div id="messages" aria-live="polite"></div>
+
+      <div class="input-row">
+        <textarea
+          id="user-input"
+          placeholder="Ask anything about building your Scratch game…"
+          rows="2"
+        ></textarea>
+        <button class="btn btn-send" id="send-btn">Send 🚀</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Powered by Claude AI &amp; Science Olympiad 🏆</p>
+  </footer>
+
+  <script>
+    // ─── State ───────────────────────────────────────────────────────────────
+    let rulesUploaded = false;
+
+    // ─── Upload ──────────────────────────────────────────────────────────────
+    const pdfInput = document.getElementById('pdf-input');
+    const fileNameSpan = document.getElementById('file-name');
+    const uploadStatus = document.getElementById('upload-status');
+
+    pdfInput.addEventListener('change', () => {
+      const file = pdfInput.files[0];
+      if (!file) return;
+      fileNameSpan.textContent = file.name;
+      uploadPDF(file);
+    });
+
+    async function uploadPDF(file) {
+      setUploadStatus('⏳ Reading rules PDF — this takes about 10–15 seconds…', 'info');
+      const formData = new FormData();
+      formData.append('pdf', file);
+
+      try {
+        const res = await fetch('/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          setUploadStatus('❌ ' + (data.error || 'Upload failed'), 'error');
+          return;
+        }
+
+        rulesUploaded = true;
+        setUploadStatus('✅ Rules loaded! Let\'s start building your game.', 'success');
+        document.getElementById('chat-section').style.display = 'block';
+
+        // Auto-send a greeting so Claude introduces the build plan
+        sendMessage("Hi! I just uploaded the Game On rules. Can you give me a summary of what my Scratch game needs to do and a step-by-step build plan?");
+      } catch (err) {
+        setUploadStatus('❌ Network error: ' + err.message, 'error');
+      }
+    }
+
+    function setUploadStatus(msg, type) {
+      uploadStatus.textContent = msg;
+      uploadStatus.className = 'status ' + type;
+    }
+
+    // ─── Chat ────────────────────────────────────────────────────────────────
+    const messagesDiv = document.getElementById('messages');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    sendBtn.addEventListener('click', () => {
+      const text = userInput.value.trim();
+      if (text) sendMessage(text);
+    });
+
+    userInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const text = userInput.value.trim();
+        if (text) sendMessage(text);
+      }
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', async () => {
+      await fetch('/reset', { method: 'POST' });
+      messagesDiv.innerHTML = '';
+      appendMessage('assistant', '🔄 Conversation cleared! Ask me anything about your Scratch game.');
+    });
+
+    function appendMessage(role, text) {
+      const div = document.createElement('div');
+      div.className = 'message ' + role;
+
+      const label = document.createElement('span');
+      label.className = 'label';
+      label.textContent = role === 'user' ? '🧑 You' : '🤖 Coach';
+      div.appendChild(label);
+
+      const content = document.createElement('div');
+      content.className = 'content';
+      content.innerHTML = markdownToHtml(text);
+      div.appendChild(content);
+
+      messagesDiv.appendChild(div);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      return content; // return content div so we can stream into it
+    }
+
+    function appendStreamingMessage() {
+      const div = document.createElement('div');
+      div.className = 'message assistant';
+
+      const label = document.createElement('span');
+      label.className = 'label';
+      label.textContent = '🤖 Coach';
+      div.appendChild(label);
+
+      const content = document.createElement('div');
+      content.className = 'content';
+      content.textContent = '…';
+      div.appendChild(content);
+
+      messagesDiv.appendChild(div);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      return content;
+    }
+
+    async function sendMessage(text) {
+      if (!rulesUploaded) {
+        setUploadStatus('⚠️ Please upload the rules PDF first!', 'error');
+        return;
+      }
+
+      userInput.value = '';
+      sendBtn.disabled = true;
+      appendMessage('user', text);
+
+      const contentDiv = appendStreamingMessage();
+      let fullText = '';
+
+      try {
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text }),
+        });
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop(); // keep incomplete line
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const payload = line.slice(6).trim();
+            if (payload === '[DONE]') break;
+
+            try {
+              const obj = JSON.parse(payload);
+              if (obj.error) {
+                contentDiv.textContent = '❌ Error: ' + obj.error;
+                break;
+              }
+              if (obj.text) {
+                fullText += obj.text;
+                contentDiv.innerHTML = markdownToHtml(fullText);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+              }
+            } catch (_) { /* skip bad JSON */ }
+          }
+        }
+      } catch (err) {
+        contentDiv.textContent = '❌ Network error: ' + err.message;
+      } finally {
+        sendBtn.disabled = false;
+        userInput.focus();
+      }
+    }
+
+    // ─── Minimal markdown → HTML ─────────────────────────────────────────────
+    function markdownToHtml(md) {
+      return md
+        // Escape HTML first
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        // Bold **text**
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        // Italic *text*
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        // Code `code`
+        .replace(/`(.+?)`/g, '<code>$1</code>')
+        // Numbered list items
+        .replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>')
+        // Bullet list items
+        .replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>')
+        // Wrap consecutive <li> in <ol>/<ul> — simplified: just wrap all in ul
+        .replace(/(<li>.*<\/li>\n?)+/gs, (match) => '<ul>' + match + '</ul>')
+        // Headings ### ## #
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        // Paragraphs (double newline)
+        .replace(/\n\n+/g, '</p><p>')
+        // Single newlines → <br>
+        .replace(/\n/g, '<br>');
+    }
+  </script>
+
+</body>
+</html>
