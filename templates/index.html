@@ -15,7 +15,8 @@
 
   <main>
 
-    <!-- Upload section -->
+    <!-- Upload section (hidden when rules are pre-loaded) -->
+    {% if not rules_preloaded %}
     <section id="upload-section" class="card">
       <h2>📄 Step 1: Upload Your Rules PDF</h2>
       <p>Get the official "Game On" rules from your Science Olympiad organizer and upload them here.</p>
@@ -28,9 +29,10 @@
       </div>
       <div id="upload-status"></div>
     </section>
+    {% endif %}
 
     <!-- Chat section -->
-    <section id="chat-section" class="card" style="display:none">
+    <section id="chat-section" class="card" {% if not rules_preloaded %}style="display:none"{% endif %}>
       <div class="chat-header">
         <h2>💬 Chat with Your Coach</h2>
         <button class="btn btn-small" id="reset-btn" title="Clear conversation">🔄 New Chat</button>
@@ -56,7 +58,7 @@
 
   <script>
     // ─── State ───────────────────────────────────────────────────────────────
-    let rulesUploaded = false;
+    let rulesUploaded = {{ 'true' if rules_preloaded else 'false' }};
 
     // ─── Upload ──────────────────────────────────────────────────────────────
     const pdfInput = document.getElementById('pdf-input');

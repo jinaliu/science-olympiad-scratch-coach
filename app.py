@@ -25,8 +25,15 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-prod")
 
+# Load pre-extracted rules at startup if available
+_RULES_FILE = os.path.join(os.path.dirname(__file__), "rules.txt")
+_DEFAULT_RULES: str | None = None
+if os.path.exists(_RULES_FILE):
+    with open(_RULES_FILE) as f:
+        _DEFAULT_RULES = f.read()
+    print(f"Loaded rules.txt ({len(_DEFAULT_RULES)} chars)")
+
 # In-memory store: session_id -> {rules_text, messages}
-# For a single-user Chromebook app this is perfectly fine.
 _store: dict[str, dict[str, Any]] = {}
 
 
@@ -36,7 +43,7 @@ def get_store() -> dict[str, Any]:
     if not sid or sid not in _store:
         sid = str(uuid.uuid4())
         session["id"] = sid
-        _store[sid] = {"rules_text": None, "messages": []}
+        _store[sid] = {"rules_text": _DEFAULT_RULES, "messages": []}
     return _store[sid]
 
 
@@ -44,7 +51,7 @@ def get_store() -> dict[str, Any]:
 def index() -> str:
     """Render the main chat page."""
     get_store()  # ensure session exists
-    return render_template("index.html")
+    return render_template("index.html", rules_preloaded=_DEFAULT_RULES is not None)
 
 
 @app.route("/upload", methods=["POST"])

@@ -1,0 +1,165 @@
+# GAME ON
+
+## DESCRIPTION
+Teams will create a side-scrolling or platformer game using Scratch (a block-based programming language), based on a science theme provided by the judges. These games will be scored on a rubric system. Participants will need to be able to provide their own laptops/computers.
+
+## NUMBER OF PARTICIPANTS: 2
+## APPROXIMATE TIME: 45 minutes
+
+---
+
+## SIDE-SCROLLING GAME
+A side-scrolling game is where the main sprite/character moves left and right and jumps up and falls down within the space, collecting "good objects" to gain points and dodging "bad objects" to avoid losing points. If you gain enough points you will win the game, and if you get hit and lose too many points you will lose the game. You must incorporate the science topic within the game. (Examples of this type of game would be Super Mario or a Cuphead Boss Battle. Having the background and background structures move is up to you. The simple mechanics of moving left, right, and jumping while collecting "good objects" [such as coins] while dodging "bad objects" [such as fireballs] should be a part of your game).
+
+### Example Games:
+- **Non-moving Background:** https://g.co/gemini/share/cbc3ccc5ba08
+- **Moving Background:** https://g.co/gemini/share/6ef29d08568e
+
+Note: (Your game will NEED to be made on Scratch)
+
+---
+
+## PLATFORMER GAME
+A platformer game is where the main sprite/character must navigate upwards a series of platforms and obstacles to get to the top. You must find a way to incorporate the science topic. (An example of this type of game would be Doodle Jump, your game should follow the same mechanic of going up and having obstacles but should still be original and have unique structures).
+
+### Example Game
+- https://gemini.google.com/share/98429235c1a7 (Full Screen your laptop for the best experience)
+
+Note: (Your game will NEED to be made on Scratch)
+
+---
+
+## COMPETITION
+
+### a. 
+Teams will have 45 minutes to code a Scratch (scratch.mit.edu) game based on a scientific theme provided by the judges. Additionally, the game will **either be a side-scroller or platformer game** as announced on competition day.
+
+### b. 
+One of the scientific topics from this list will be provided on the day of the competition:
+
+1. Earthquakes
+2. Natural selection
+3. Asteroids or Meteors
+4. Germs and Microbes
+5. The Carbon Cycle
+6. DNA and Heredity
+7. Constellations
+8. States of Matter
+9. Electromagnetic Spectrum
+10. Black Holes
+11. Exoplanets
+12. Atoms and Molecules
+13. Air Pollution
+14. Gravity
+15. Fossils
+16. The Milky Way Galaxy
+17. Magnetics
+18. Elements
+19. Optics
+20. Moon phases
+
+### c. 
+**Cheating will result in disqualification**
+- i. Do not use outside sites aside other than scratch - **NO ChatGPT or AI**
+- ii. Do not edit your game past the **45 minute** time limit
+- iii. No bringing in prewritten code
+
+### d. 
+Paper and pencils **WILL** be allowed for this event.
+
+---
+
+## Rubric
+
+### a. 
+Highest score wins
+
+### b. 
+No tiebreakers
+
+### c. 
+Scored by rubric below
+
+The points for each requirement is based on the circled number to the left. No partial credit.
+
+---
+
+## Introduction:
+
+⊕ Game Title is present
+⊕ Game Title bears a connection to the topic
+
+---
+
+## Instructions:
+
+⊕ Instructions are available and clarify how to play
+⊕ Game Objective is stated
+⊕ Explains scoring system
+⊕ Explains moving controls
+
+---
+
+## User controlled Sprite:
+
+⊕ Sprite orientation: faces appropriate direction
+⊕ Sprite Movement: Sprite has smooth movement given gameplay
+
+---
+
+## Sprite Interactions:
+
+⊕ Appropriate interaction given rules
+
+---
+
+## Score Keeping:
+
+⊕ Functions properly (adds and deducts instantaneously)
+⊕ Scoring appears on screen
+
+---
+
+## Debriefing:
+
+⊕ Clear outcome (provides a final score, and lets you know if you win or lost)
+  ⊕ Gameplay Stops (Image pops up indicating end of the game, sprites stop moving)
+
+---
+
+## Documentation:
+
+⊕ Main sections of code are explained with coding comments
+⊕ Elements are named/titled
+⊕ Code is clean and efficient
+
+---
+
+## Gameplay:
+
+⊕ Science theme (appropriate scientific principles applied to theme, scientific explanations are included)
+⊕ Graphics (Appropriate sprite, background appropriate for theme and gameplay)
+
+---
+
+## Bonus Points (optional)
+
+⊕ **Character Selection** (Ability to choose what the main sprite/character looks like)
+  ⊕ **Multiple levels** (A change in the game's layout, structure, or difficulty based on completion or winning)
+⊕ **Custom Sprite** (Coder makes an original character, not copied from somewhere else)
+
+---
+
+## Total Possible Points: 28/24
+
+- Introduction (2)
+- Instructions (4)
+- UC Sprite (4)
+- Sprite Interactions (1)
+- Score Keeping (2)
+- Debriefing (3)
+- Documentation (5)
+- Gameplay (3)
+- Bonus* (4)
+
+*This is a bonus category and not a requirement of the game.
