@@ -51,7 +51,7 @@
 
       <div class="input-row">
         <input type="file" id="screenshot-input" accept="image/*" hidden />
-        <button class="btn btn-screenshot" id="screenshot-btn" title="Attach screenshot for rubric feedback">📷</button>
+        <button class="btn btn-screenshot" id="screenshot-btn" title="Screenshot tip / pick file">📷</button>
         <textarea
           id="user-input"
           placeholder="Ask anything, or attach a screenshot for rubric feedback…"
@@ -123,45 +123,16 @@
     const imagePreview = document.getElementById('image-preview');
     const removeImageBtn = document.getElementById('remove-image-btn');
 
-    screenshotBtn.addEventListener('click', async () => {
-      // Use Screen Capture API — browser shows a window/tab picker dialog
-      if (!navigator.mediaDevices?.getDisplayMedia) {
-        // Fallback to file picker if API unavailable
-        screenshotInput.click();
-        return;
-      }
-      try {
-        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-        const track = stream.getVideoTracks()[0];
+    screenshotBtn.addEventListener('click', () => {
+      // Show paste instructions toast, or fall back to file picker
+      showToast('📸 Screenshot tip: Press Ctrl+Shift+Show Windows key to screenshot your Scratch window, then come back here and press Ctrl+V to paste! Or double-click 📷 to pick a file.', 5000);
+      // Second click within 5s → open file picker
+      screenshotBtn.dataset.primed = 'true';
+      setTimeout(() => { screenshotBtn.dataset.primed = ''; }, 5000);
+    });
 
-        // Capture one frame via ImageCapture API or canvas fallback
-        let blob;
-        if (window.ImageCapture) {
-          const capture = new ImageCapture(track);
-          blob = await capture.takePhoto();
-        } else {
-          // Canvas fallback: draw current frame from a video element
-          const video = document.createElement('video');
-          video.srcObject = stream;
-          await video.play();
-          const canvas = document.createElement('canvas');
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          canvas.getContext('2d').drawImage(video, 0, 0);
-          blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-          video.pause();
-        }
-
-        // Stop capture immediately — don't record anything
-        stream.getTracks().forEach(t => t.stop());
-
-        attachImage(new File([blob], 'screenshot.png', { type: blob.type || 'image/png' }));
-      } catch (err) {
-        if (err.name !== 'NotAllowedError') {
-          // User cancelled — that's fine. Only show error for unexpected failures.
-          alert('Could not capture screen: ' + err.message);
-        }
-      }
+    screenshotBtn.addEventListener('dblclick', () => {
+      screenshotInput.click();
     });
 
     screenshotInput.addEventListener('change', () => {
@@ -194,6 +165,19 @@
         imagePreviewRow.style.display = 'flex';
       };
       reader.readAsDataURL(file);
+    }
+
+    function showToast(msg, duration = 3000) {
+      let toast = document.getElementById('toast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        document.body.appendChild(toast);
+      }
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => toast.classList.remove('show'), duration);
     }
 
     function clearImage() {
