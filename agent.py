@@ -84,23 +84,46 @@ OFFICIAL GAME ON RULES:
 def stream_chat(
     messages: list[dict],
     rules_text: str,
+    image_base64: str | None = None,
+    image_type: str | None = None,
 ) -> Generator[str, None, None]:
     """Stream a chat response from Claude.
 
     Args:
         messages: Conversation history in Claude message format.
         rules_text: Extracted rules text from the uploaded PDF.
+        image_base64: Optional base64-encoded screenshot for rubric feedback.
+        image_type: MIME type of the image (e.g. "image/png").
 
     Yields:
         Text chunks as they stream from the API.
     """
     system = build_system_with_rules(rules_text)
 
+    # If an image is attached, upgrade the last user message to a content array
+    api_messages = messages.copy()
+    if image_base64 and image_type and api_messages and api_messages[-1]["role"] == "user":
+        last_text = api_messages[-1]["content"]
+        api_messages[-1] = {
+            "role": "user",
+            "content": [
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": image_type,
+                        "data": image_base64,
+                    },
+                },
+                {"type": "text", "text": last_text},
+            ],
+        }
+
     with client.messages.stream(
         model="claude-haiku-4-5",
         max_tokens=2048,
         system=system,
-        messages=messages,
+        messages=api_messages,
     ) as stream:
         for text in stream.text_stream:
             yield text

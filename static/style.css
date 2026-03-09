@@ -95,8 +95,10 @@ main {
 .btn:active { transform: scale(.97); }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 
-.btn-upload { background: var(--primary); color: #fff; }
-.btn-send   { background: var(--secondary); color: #fff; white-space: nowrap; }
+.btn-upload     { background: var(--primary); color: #fff; }
+.btn-send       { background: var(--secondary); color: #fff; white-space: nowrap; }
+.btn-screenshot { background: #fff; border: 1.5px solid #d0cce8; font-size: 1.2rem; padding: .45rem .65rem; }
+.btn-screenshot:hover { background: #f0eeff; }
 .btn-small  {
   background: transparent;
   border: 1.5px solid var(--primary);
@@ -169,6 +171,64 @@ main {
 .content ul, .content ol { padding-left: 1.4em; margin: .4em 0; }
 .content li { margin: .2em 0; }
 .content p  { margin: .3em 0; }
+
+/* ── Image Preview ───────────────────────────────────────────────────────── */
+#image-preview-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-top: .75rem;
+  padding: .5rem .75rem;
+  background: #f0eeff;
+  border-radius: var(--radius);
+  border: 1.5px dashed var(--primary);
+}
+
+#image-preview-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+#image-preview {
+  width: 80px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #c9c4e8;
+  display: block;
+}
+
+#remove-image-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--secondary);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: .65rem;
+  cursor: pointer;
+  line-height: 18px;
+  text-align: center;
+  padding: 0;
+}
+
+.preview-hint {
+  font-size: .82rem;
+  color: var(--primary);
+}
+
+/* Screenshot inside a chat bubble */
+.chat-screenshot {
+  display: block;
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: 8px;
+  margin-bottom: .5rem;
+  border: 1px solid #d0cce8;
+}
 
 /* ── Input Row ───────────────────────────────────────────────────────────── */
 .input-row {

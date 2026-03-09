@@ -98,17 +98,20 @@ def chat() -> Response:
 
     data = request.get_json()
     user_message: str = (data or {}).get("message", "").strip()
+    image_base64: str | None = (data or {}).get("image_base64")
+    image_type: str | None = (data or {}).get("image_type")
+
     if not user_message:
         return jsonify({"error": "Message cannot be empty."}), 400
 
-    # Add user message to history
+    # Add user message to history (store plain text; image is sent to API only)
     store["messages"].append({"role": "user", "content": user_message})
 
     def generate():
         """SSE generator — yields chunks and then the [DONE] sentinel."""
         full_response: list[str] = []
         try:
-            for chunk in stream_chat(store["messages"], store["rules_text"]):
+            for chunk in stream_chat(store["messages"], store["rules_text"], image_base64, image_type):
                 full_response.append(chunk)
                 # SSE format: "data: <payload>\n\n"
                 payload = json.dumps({"text": chunk})

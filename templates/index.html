@@ -40,10 +40,21 @@
 
       <div id="messages" aria-live="polite"></div>
 
+      <!-- Image preview (shown when screenshot is attached) -->
+      <div id="image-preview-row" style="display:none">
+        <div id="image-preview-wrap">
+          <img id="image-preview" alt="Screenshot preview" />
+          <button id="remove-image-btn" title="Remove screenshot">✕</button>
+        </div>
+        <span class="preview-hint">📸 Screenshot attached — coach will review it against the rubric</span>
+      </div>
+
       <div class="input-row">
+        <input type="file" id="screenshot-input" accept="image/*" hidden />
+        <button class="btn btn-screenshot" id="screenshot-btn" title="Attach screenshot for rubric feedback">📷</button>
         <textarea
           id="user-input"
-          placeholder="Ask anything about building your Scratch game…"
+          placeholder="Ask anything, or attach a screenshot for rubric feedback…"
           rows="2"
         ></textarea>
         <button class="btn btn-send" id="send-btn">Send 🚀</button>
@@ -102,21 +113,111 @@
       uploadStatus.className = 'status ' + type;
     }
 
+    // ─── Screenshot state ─────────────────────────────────────────────────────
+    let pendingImageBase64 = null;
+    let pendingImageType = null;
+
+    const screenshotBtn = document.getElementById('screenshot-btn');
+    const screenshotInput = document.getElementById('screenshot-input');
+    const imagePreviewRow = document.getElementById('image-preview-row');
+    const imagePreview = document.getElementById('image-preview');
+    const removeImageBtn = document.getElementById('remove-image-btn');
+
+    screenshotBtn.addEventListener('click', async () => {
+      // Use Screen Capture API — browser shows a window/tab picker dialog
+      if (!navigator.mediaDevices?.getDisplayMedia) {
+        // Fallback to file picker if API unavailable
+        screenshotInput.click();
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+        const track = stream.getVideoTracks()[0];
+
+        // Capture one frame via ImageCapture API or canvas fallback
+        let blob;
+        if (window.ImageCapture) {
+          const capture = new ImageCapture(track);
+          blob = await capture.takePhoto();
+        } else {
+          // Canvas fallback: draw current frame from a video element
+          const video = document.createElement('video');
+          video.srcObject = stream;
+          await video.play();
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          canvas.getContext('2d').drawImage(video, 0, 0);
+          blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+          video.pause();
+        }
+
+        // Stop capture immediately — don't record anything
+        stream.getTracks().forEach(t => t.stop());
+
+        attachImage(new File([blob], 'screenshot.png', { type: blob.type || 'image/png' }));
+      } catch (err) {
+        if (err.name !== 'NotAllowedError') {
+          // User cancelled — that's fine. Only show error for unexpected failures.
+          alert('Could not capture screen: ' + err.message);
+        }
+      }
+    });
+
+    screenshotInput.addEventListener('change', () => {
+      const file = screenshotInput.files[0];
+      if (file) attachImage(file);
+      screenshotInput.value = '';
+    });
+
+    removeImageBtn.addEventListener('click', clearImage);
+
+    // Support Ctrl+V paste from clipboard (Chromebook screenshot shortcut)
+    document.addEventListener('paste', (e) => {
+      const items = e.clipboardData?.items || [];
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          attachImage(item.getAsFile());
+          break;
+        }
+      }
+    });
+
+    function attachImage(file) {
+      pendingImageType = file.type || 'image/png';
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        // dataUrl is "data:image/png;base64,XXXX" — extract just the base64 part
+        pendingImageBase64 = dataUrl.split(',')[1];
+        imagePreview.src = dataUrl;
+        imagePreviewRow.style.display = 'flex';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearImage() {
+      pendingImageBase64 = null;
+      pendingImageType = null;
+      imagePreview.src = '';
+      imagePreviewRow.style.display = 'none';
+    }
+
     // ─── Chat ────────────────────────────────────────────────────────────────
     const messagesDiv = document.getElementById('messages');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
 
     sendBtn.addEventListener('click', () => {
-      const text = userInput.value.trim();
-      if (text) sendMessage(text);
+      const text = userInput.value.trim() || (pendingImageBase64 ? 'Please review my Scratch project screenshot against the rubric and tell me how I\'m doing!' : '');
+      if (text || pendingImageBase64) sendMessage(text);
     });
 
     userInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        const text = userInput.value.trim();
-        if (text) sendMessage(text);
+        const text = userInput.value.trim() || (pendingImageBase64 ? 'Please review my Scratch project screenshot against the rubric and tell me how I\'m doing!' : '');
+        if (text || pendingImageBase64) sendMessage(text);
       }
     });
 
@@ -126,7 +227,7 @@
       appendMessage('assistant', '🔄 Conversation cleared! Ask me anything about your Scratch game.');
     });
 
-    function appendMessage(role, text) {
+    function appendMessage(role, text, imageSrc = null) {
       const div = document.createElement('div');
       div.className = 'message ' + role;
 
@@ -137,12 +238,23 @@
 
       const content = document.createElement('div');
       content.className = 'content';
-      content.innerHTML = markdownToHtml(text);
+      if (imageSrc) {
+        const img = document.createElement('img');
+        img.src = imageSrc;
+        img.className = 'chat-screenshot';
+        img.alt = 'Scratch project screenshot';
+        content.appendChild(img);
+      }
+      if (text) {
+        const textDiv = document.createElement('div');
+        textDiv.innerHTML = markdownToHtml(text);
+        content.appendChild(textDiv);
+      }
       div.appendChild(content);
 
       messagesDiv.appendChild(div);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      return content; // return content div so we can stream into it
+      return content;
     }
 
     function appendStreamingMessage() {
@@ -170,9 +282,16 @@
         return;
       }
 
+      // Snapshot and clear the pending image before async work
+      const imageBase64 = pendingImageBase64;
+      const imageType = pendingImageType;
+      const imageSrc = imageBase64 ? `data:${imageType};base64,${imageBase64}` : null;
+
       userInput.value = '';
       sendBtn.disabled = true;
-      appendMessage('user', text);
+      clearImage();
+
+      appendMessage('user', text, imageSrc);
 
       const contentDiv = appendStreamingMessage();
       let fullText = '';
@@ -181,7 +300,7 @@
         const res = await fetch('/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text }),
+          body: JSON.stringify({ message: text, image_base64: imageBase64, image_type: imageType }),
         });
 
         const reader = res.body.getReader();
